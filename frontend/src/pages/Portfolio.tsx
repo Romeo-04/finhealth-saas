@@ -1,15 +1,41 @@
 import { useEffect, useState } from "react";
 import { api, peso, type Band, type ClientSummary, type PortfolioStats } from "../api";
-import { BAND_COLORS, BandBadge, Card, Spinner, titleCase } from "../components/ui";
+import {
+  BAND_COLORS,
+  BandBadge,
+  Card,
+  IconAlert,
+  IconCheck,
+  Spinner,
+  titleCase,
+} from "../components/ui";
 
 const BANDS: Band[] = ["Healthy", "Coping", "Vulnerable"];
 
-function Kpi({ label, value, sub }: { label: string; value: string; sub?: string }) {
+const KPI_ACCENT = {
+  neutral: "text-slate-900",
+  danger: "text-rose-600",
+  positive: "text-emerald-600",
+} as const;
+
+function Kpi({
+  label,
+  value,
+  sub,
+  accent = "neutral",
+}: {
+  label: string;
+  value: string;
+  sub?: string;
+  accent?: keyof typeof KPI_ACCENT;
+}) {
   return (
-    <Card>
-      <div className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</div>
-      <div className="mt-1 text-2xl font-bold">{value}</div>
-      {sub && <div className="mt-0.5 text-xs text-slate-500">{sub}</div>}
+    <Card className="p-4">
+      <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={`mt-1.5 text-[26px] font-bold leading-none tabular-nums ${KPI_ACCENT[accent]}`}>
+        {value}
+      </div>
+      {sub && <div className="mt-1.5 text-xs leading-snug text-slate-500">{sub}</div>}
     </Card>
   );
 }
@@ -70,11 +96,13 @@ export default function Portfolio({ onOpenClient }: { onOpenClient: (id: string)
           label="Vulnerable"
           value={`${stats.band_pct.Vulnerable}%`}
           sub={`${stats.band_counts.Vulnerable} clients below 40`}
+          accent="danger"
         />
         <Kpi
           label="With resilience gap"
           value={`${stats.pct_with_resilience_gap}%`}
           sub="missing required protection"
+          accent="danger"
         />
         <Kpi
           label="Uninsured exposure"
@@ -85,63 +113,82 @@ export default function Portfolio({ onOpenClient }: { onOpenClient: (id: string)
           label="Commission if gaps closed"
           value={`${peso(stats.projected_annual_commission)}/yr`}
           sub="the incentive to serve these clients"
+          accent="positive"
         />
       </div>
 
       <BandDistribution stats={stats} />
 
-      <Card className="overflow-x-auto p-0">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500">
-              <th className="px-4 py-3">Client</th>
-              <th className="px-4 py-3">Livelihood</th>
-              <th className="px-4 py-3">Municipality</th>
-              <th className="px-4 py-3">Hazard zone</th>
-              <th className="px-4 py-3 text-right">FinHealth</th>
-              <th className="px-4 py-3">Band</th>
-              <th className="px-4 py-3">Gap</th>
-            </tr>
-          </thead>
-          <tbody>
-            {clients.map((c) => (
-              <tr
-                key={c.client_id}
-                onClick={() => onOpenClient(c.client_id)}
-                className="cursor-pointer border-b border-slate-100 last:border-0 hover:bg-slate-50"
-              >
-                <td className="px-4 py-2.5 font-medium">
-                  {c.name}
-                  <span className="ml-2 text-xs text-slate-400">{c.client_id}</span>
-                </td>
-                <td className="px-4 py-2.5">{titleCase(c.livelihood)}</td>
-                <td className="px-4 py-2.5">{c.municipality}</td>
-                <td className="px-4 py-2.5">
-                  <span
-                    className={
-                      c.hazard_zone === "low_risk" ? "text-slate-500" : "font-medium text-rose-600"
-                    }
-                  >
-                    {titleCase(c.hazard_zone)}
-                  </span>
-                </td>
-                <td className="px-4 py-2.5 text-right font-semibold tabular-nums">
-                  {c.overall_score}
-                </td>
-                <td className="px-4 py-2.5">
-                  <BandBadge band={c.band} />
-                </td>
-                <td className="px-4 py-2.5">
-                  {c.has_resilience_gap ? (
-                    <span className="text-xs font-semibold text-rose-600">⚠ gap</span>
-                  ) : (
-                    <span className="text-xs text-emerald-600">covered</span>
-                  )}
-                </td>
+      <Card className="overflow-hidden p-0">
+        <div className="flex items-center justify-between border-b border-slate-200/80 px-5 py-3">
+          <div className="text-sm font-semibold text-slate-800">Clients</div>
+          <div className="text-xs text-slate-500">{clients.length} · sorted by FinHealth score</div>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-slate-200/80 bg-slate-50/80 text-left text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                <th className="px-5 py-2.5">Client</th>
+                <th className="px-5 py-2.5">Livelihood</th>
+                <th className="px-5 py-2.5">Municipality</th>
+                <th className="px-5 py-2.5">Hazard zone</th>
+                <th className="px-5 py-2.5 text-right">FinHealth</th>
+                <th className="px-5 py-2.5">Band</th>
+                <th className="px-5 py-2.5">Gap</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {clients.map((c) => (
+                <tr
+                  key={c.client_id}
+                  onClick={() => onOpenClient(c.client_id)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onOpenClient(c.client_id);
+                    }
+                  }}
+                  tabIndex={0}
+                  role="button"
+                  className="cursor-pointer border-b border-slate-100 outline-none transition-colors last:border-0 hover:bg-indigo-50/40 focus-visible:bg-indigo-50"
+                >
+                  <td className="px-5 py-2.5 font-medium text-slate-800">
+                    {c.name}
+                    <span className="ml-2 text-xs text-slate-400">{c.client_id}</span>
+                  </td>
+                  <td className="px-5 py-2.5 text-slate-600">{titleCase(c.livelihood)}</td>
+                  <td className="px-5 py-2.5 text-slate-600">{c.municipality}</td>
+                  <td className="px-5 py-2.5">
+                    <span
+                      className={
+                        c.hazard_zone === "low_risk" ? "text-slate-500" : "font-medium text-rose-600"
+                      }
+                    >
+                      {titleCase(c.hazard_zone)}
+                    </span>
+                  </td>
+                  <td className="px-5 py-2.5 text-right font-semibold tabular-nums text-slate-800">
+                    {c.overall_score}
+                  </td>
+                  <td className="px-5 py-2.5">
+                    <BandBadge band={c.band} />
+                  </td>
+                  <td className="px-5 py-2.5">
+                    {c.has_resilience_gap ? (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-rose-600">
+                        <IconAlert className="h-3.5 w-3.5" /> gap
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                        <IconCheck className="h-3.5 w-3.5" /> covered
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </div>
   );

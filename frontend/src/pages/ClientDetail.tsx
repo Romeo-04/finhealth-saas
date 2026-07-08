@@ -9,11 +9,12 @@ import {
 } from "../api";
 import {
   BandBadge,
+  Button,
   Card,
+  IconChevronLeft,
   ScoreBar,
   SeverityChip,
   Spinner,
-  TIER_STYLE,
   TierBadge,
   titleCase,
 } from "../components/ui";
@@ -73,8 +74,11 @@ export default function ClientDetail({
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm font-medium text-sky-700 hover:underline">
-        ← Back to portfolio
+      <button
+        onClick={onBack}
+        className="inline-flex items-center gap-1 rounded-md text-sm font-medium text-indigo-700 transition-colors hover:text-indigo-900"
+      >
+        <IconChevronLeft className="h-4 w-4" /> Back to portfolio
       </button>
 
       {/* Header: overall vs proxy credit signal, side by side */}
@@ -308,13 +312,11 @@ function RecCard({ rec, tier }: { rec: Recommendation; tier: Tier }) {
         </span>
       </div>
       {rec.enrollment_pathway && (
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded bg-slate-50 px-2.5 py-1.5">
+        <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2">
           <span className="text-xs text-slate-600">{rec.enrollment_pathway}</span>
-          <button
-            className={`whitespace-nowrap rounded-md px-3 py-1 text-xs font-semibold text-white ${TIER_STYLE[tier].btn}`}
-          >
+          <Button variant="subtle" size="sm" className="whitespace-nowrap">
             {TIER_ACTION[tier]}
-          </button>
+          </Button>
         </div>
       )}
     </div>
