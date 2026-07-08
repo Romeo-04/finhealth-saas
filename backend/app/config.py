@@ -16,32 +16,42 @@ SYNTHETIC_CLIENT_COUNT = 150
 # ---------------------------------------------------------------------------
 
 # Dimension weights for the overall FinHealth score. Must sum to 1.0.
+# Revised architecture: five dimensions — Spend, Save, Borrow, Plan, Resilience.
 DIMENSION_WEIGHTS = {
-    "income_stability": 0.25,
-    "savings_liquidity": 0.25,
-    "debt_burden": 0.25,
-    "resilience_protection": 0.25,
+    "spend": 0.20,
+    "save": 0.20,
+    "borrow": 0.20,
+    "plan": 0.20,
+    "resilience": 0.20,
 }
 
 # Band thresholds on the 0-100 overall score.
 BAND_HEALTHY_MIN = 70
 BAND_COPING_MIN = 40
 
-# Income stability
-INCOME_DIVERSITY_BONUS_PER_SOURCE = 5   # per source beyond the first
-INCOME_DIVERSITY_BONUS_CAP = 10
-# Slope (as fraction of mean income per month) beyond which the negative-trend
-# penalty starts; at 2x this slope the full penalty applies.
-INCOME_TREND_SLOPE_THRESHOLD = 0.01
-INCOME_TREND_PENALTY_MAX = 10
+# --- Spend (expenditure pattern) -------------------------------------------
+# Expense-to-income ratio bands: (ratio_upper_bound, score_at_lower, score_at_upper)
+# Lower spend ratio => more margin => higher score.
+SPEND_RATIO_BANDS = [
+    (0.50, 100, 88),
+    (0.70, 88, 68),
+    (0.85, 68, 45),
+    (1.00, 45, 20),
+]
+SPEND_RATIO_WORST_SCORE = 0  # ratio >= 1.0 (spending at/above income) -> 20 -> 0
+# Expense-volatility penalty: erratic spending is a planning risk. CV above the
+# threshold starts costing points, up to the max at 2x the threshold.
+SPEND_VOLATILITY_CV_THRESHOLD = 0.15
+SPEND_VOLATILITY_PENALTY_MAX = 12
 
-# Whether to apply the clearly-labelled ML-assisted refinement to the income
-# stability subscore. The rule-based score always works standalone.
+# Whether to apply the clearly-labelled ML-assisted refinement to the Spend
+# subscore (income/expense pattern). The rule-based score always works alone.
 USE_ML_INCOME_REFINEMENT = True
 # The refined score is blended: final = (1-w)*rule_based + w*ml_prediction
 ML_REFINEMENT_BLEND_WEIGHT = 0.25
 
-# Savings & liquidity benchmark bands (months of essential expenses covered).
+# --- Save (savings & liquidity) --------------------------------------------
+# Benchmark bands (months of essential expenses covered).
 # (upper_bound_months, score_at_lower_edge, score_at_upper_edge)
 SAVINGS_BANDS = [
     (1.0, 0, 40),
@@ -50,8 +60,22 @@ SAVINGS_BANDS = [
 ]
 SAVINGS_TOP_SCORE = 100  # score approached at/beyond 6+ months (90 -> 100)
 SAVINGS_BENCHMARK_MONTHS = 3.0  # the "resilient" benchmark quoted in drivers
+# Deposit-consistency factor: a client who saves regularly scales the buffer
+# score up; erratic/no deposits scales it down. Maps regularity 0->1 to factor.
+DEPOSIT_REGULARITY_FACTOR_MIN = 0.85
+DEPOSIT_REGULARITY_FACTOR_MAX = 1.05
 
-# Debt burden DSR bands: (dsr_upper_bound, score_at_dsr_lower, score_at_dsr_upper)
+# --- Plan (forward-looking financial behaviour) ----------------------------
+# Account tenure (months) scored on a saturating curve: 0 -> 0, TENURE_FULL -> 100.
+PLAN_TENURE_FULL_MONTHS = 48
+# Product diversification: holding across savings / credit / insurance classes.
+# score contribution = min(classes, cap) / cap * 100.
+PLAN_DIVERSIFICATION_CAP = 3
+# Sub-weights within Plan (must sum to 1.0): tenure, diversification, regularity.
+PLAN_SUBWEIGHTS = {"tenure": 0.40, "diversification": 0.35, "regularity": 0.25}
+
+# --- Borrow (credit use & serviceability) ----------------------------------
+# DSR bands: (dsr_upper_bound, score_at_dsr_lower, score_at_dsr_upper)
 DSR_BANDS = [
     (0.20, 100, 85),
     (0.35, 85, 65),
@@ -63,10 +87,27 @@ REPAYMENT_FACTOR_MIN = 0.85
 REPAYMENT_FACTOR_MAX = 1.05
 CONCURRENT_LOAN_PENALTY = 8       # subtracted per loan beyond the 2nd
 CONCURRENT_LOAN_PENALTY_CAP = 16
+# Non-borrower clients (no loans, no CRDPh signal) have no credit to assess.
+# The Borrow dimension is flagged insufficient-data and EXCLUDED from the
+# composite (weights renormalized over the dimensions that do have data),
+# rather than silently scored as if perfect.
+BORROW_INSUFFICIENT_DATA_PLACEHOLDER = 50  # shown in UI only; not weighted
 
-# Resilience & protection severity weights for the required-protection set.
+# --- Resilience & protection ------------------------------------------------
+# Severity weights for the required-protection set.
 SEVERITY_HIGH = 3
 SEVERITY_MEDIUM = 2
+# Estimated-loss magnitude if an uninsured risk materializes, as a multiple of
+# MEAN MONTHLY INCOME (plus, for calamity, the client's liquid savings). Feeds
+# the protection-gap manifest so the unmet need is quantified, not just named.
+ESTIMATED_LOSS_INCOME_MULTIPLE = {
+    "crop": 4,        # roughly one lost cropping season of income
+    "calamity": 3,    # storm disruption + rebuild (savings added on top)
+    "property": 5,    # livelihood asset replacement
+    "life": 24,       # ~2 years of income replacement for dependents
+    "health": 3,      # major hospitalization episode
+    "accident": 3,    # disability income bridge
+}
 
 # Proxy credit signal (the deliberately-narrow comparator): weights for the
 # two ingredients a traditional credit screen would look at.

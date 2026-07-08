@@ -11,6 +11,7 @@ export interface DimensionScore {
   score: number;
   drivers: Driver[];
   ml_assisted: boolean;
+  insufficient_data: boolean;
 }
 
 export interface GapItem {
@@ -18,6 +19,7 @@ export interface GapItem {
   severity: number;
   severity_label: "high" | "medium";
   reason: string;
+  estimated_loss: number;
 }
 
 export interface HealthProfile {
@@ -40,6 +42,9 @@ export interface HealthProfile {
   monthly_debt_service: number;
   insurance_held: string[];
   monthly_income: number[];
+  account_tenure_months: number;
+  rsbsa_registered: boolean;
+  is_borrower: boolean;
 }
 
 export type Band = "Healthy" | "Coping" | "Vulnerable";
@@ -58,6 +63,7 @@ export interface ClientSummary {
 
 export interface Product {
   id: string;
+  tier: "A" | "B" | "C";
   type: string;
   provider: string;
   name: string;
@@ -66,14 +72,19 @@ export interface Product {
   description: string;
 }
 
+export type Tier = "A" | "B" | "C";
+
 export interface Recommendation {
   status: "recommended" | "protection_gap_unaffordable";
   gap_type: string;
   severity_label: "high" | "medium";
+  tier: Tier | null;
+  tier_label: string | null;
   product: Product | null;
   rationale: string;
   premium_pct_of_disposable: number | null;
   projected_annual_commission: number | null;
+  enrollment_pathway: string | null;
 }
 
 export interface RecommendationResponse {

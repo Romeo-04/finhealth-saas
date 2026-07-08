@@ -34,6 +34,39 @@ export function ScoreBar({ score }: { score: number }) {
   );
 }
 
+export const TIER_STYLE: Record<
+  "A" | "B" | "C",
+  { bg: string; text: string; btn: string; label: string }
+> = {
+  A: {
+    bg: "bg-emerald-100",
+    text: "text-emerald-800",
+    btn: "bg-emerald-600 hover:bg-emerald-700",
+    label: "Tier A · Free government coverage",
+  },
+  B: {
+    bg: "bg-sky-100",
+    text: "text-sky-800",
+    btn: "bg-sky-600 hover:bg-sky-700",
+    label: "Tier B · Embedded microinsurance",
+  },
+  C: {
+    bg: "bg-violet-100",
+    text: "text-violet-800",
+    btn: "bg-violet-600 hover:bg-violet-700",
+    label: "Tier C · Targeted commercial",
+  },
+};
+
+export function TierBadge({ tier }: { tier: "A" | "B" | "C" }) {
+  const t = TIER_STYLE[tier];
+  return (
+    <span className={`inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${t.bg} ${t.text}`}>
+      {t.label}
+    </span>
+  );
+}
+
 export function SeverityChip({ level }: { level: "high" | "medium" }) {
   return (
     <span

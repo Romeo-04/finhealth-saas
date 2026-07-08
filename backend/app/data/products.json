@@ -1,92 +1,116 @@
 [
   {
-    "id": "P-CAL-01",
+    "id": "P-PCIC-CROP",
+    "tier": "A",
+    "type": "crop",
+    "provider": "PCIC (Government)",
+    "name": "PCIC AniSecure Rice/Corn Cover",
+    "coverage_amount": 25000,
+    "monthly_premium": 0,
+    "requires_rsbsa": true,
+    "eligible_livelihoods": ["rice_farming"],
+    "description": "Government crop insurance for RSBSA-registered rice/corn farmers. 100% premium subsidy (zero client cost) covering typhoon, flood, drought, and pests for one cropping season."
+  },
+  {
+    "id": "P-MBA-LIFE",
+    "tier": "B",
+    "type": "life",
+    "provider": "CARD MBA",
+    "name": "CARD MBA Family Micro-Life",
+    "coverage_amount": 50000,
+    "monthly_premium": 35,
+    "description": "Mutual benefit association term life with a funeral benefit rider, embedded in the member's existing FSP relationship."
+  },
+  {
+    "id": "P-MBA-CAL",
+    "tier": "B",
     "type": "calamity",
-    "provider": "AgriSure Mutual",
-    "name": "CalamityShield Basic",
+    "provider": "CARD MBA",
+    "name": "CARD MBA Calamity Assist",
     "coverage_amount": 30000,
     "monthly_premium": 55,
-    "description": "Cash payout after a declared typhoon or flood event in the insured municipality. Covers emergency expenses and income bridge."
+    "description": "Cash payout after a declared typhoon or flood in the insured municipality, activated through MBA membership."
   },
   {
-    "id": "P-CAL-02",
-    "type": "calamity",
-    "provider": "PilipinasProtect",
-    "name": "CalamityShield Plus",
-    "coverage_amount": 60000,
-    "monthly_premium": 110,
-    "description": "Higher calamity payout tier with faster parametric trigger on PAGASA storm signals."
-  },
-  {
-    "id": "P-CROP-01",
-    "type": "crop",
-    "provider": "AgriSure Mutual",
-    "name": "AniSecure Rice Cover",
+    "id": "P-PIO-ACC",
+    "tier": "B",
+    "type": "accident",
+    "provider": "CARD Pioneer",
+    "name": "Personal Accident Micro",
     "coverage_amount": 25000,
-    "monthly_premium": 60,
-    "description": "Indemnifies crop loss from typhoon, flood, pests, or drought for one cropping season. Modelled on PCIC-style cover."
+    "monthly_premium": 20,
+    "description": "Accidental death and disablement benefit with daily income support during recovery."
   },
   {
-    "id": "P-CROP-02",
+    "id": "P-PIO-FISH",
+    "tier": "B",
     "type": "crop",
-    "provider": "CoastalCare Coop",
-    "name": "HuliSecure Fisher Cover",
+    "provider": "CARD Pioneer",
+    "name": "HuliSecure Fisher Income Cover",
     "coverage_amount": 20000,
     "monthly_premium": 50,
+    "eligible_livelihoods": ["fishing"],
     "description": "Income-shock protection for fishing households: payout when storm closures or gear loss interrupt catch income."
   },
   {
-    "id": "P-LIFE-01",
-    "type": "life",
-    "provider": "BayaniLife",
-    "name": "Family Term Micro-Life",
-    "coverage_amount": 50000,
-    "monthly_premium": 35,
-    "description": "Term life cover paying a lump sum to dependents. Includes a small funeral benefit rider."
-  },
-  {
-    "id": "P-LIFE-02",
-    "type": "life",
-    "provider": "PilipinasProtect",
-    "name": "Family Term Micro-Life Plus",
-    "coverage_amount": 100000,
-    "monthly_premium": 70,
-    "description": "Higher life cover tier for households with several dependents."
-  },
-  {
-    "id": "P-HLT-01",
+    "id": "P-PIO-HLT",
+    "tier": "C",
     "type": "health",
-    "provider": "KalusuganCare",
+    "provider": "Pioneer Life (bancassurance)",
     "name": "Hospital Cash Micro-Health",
     "coverage_amount": 15000,
     "monthly_premium": 45,
-    "description": "Fixed cash benefit per hospital day plus outpatient allowance, designed to top up PhilHealth."
+    "description": "Fixed cash benefit per hospital day plus outpatient allowance, designed to top up PhilHealth. Requires an active purchasing decision."
   },
   {
-    "id": "P-HLT-02",
+    "id": "P-PIO-HLT-LITE",
+    "tier": "C",
     "type": "health",
-    "provider": "BayaniLife",
+    "provider": "Pioneer Life (bancassurance)",
     "name": "Hospital Cash Lite",
     "coverage_amount": 8000,
     "monthly_premium": 25,
     "description": "Entry-tier hospital cash benefit for thin-margin households."
   },
   {
-    "id": "P-PROP-01",
+    "id": "P-MAL-PROP",
+    "tier": "C",
     "type": "property",
-    "provider": "PilipinasProtect",
+    "provider": "Malayan (bancassurance)",
     "name": "Bahay & Negosyo Property Cover",
     "coverage_amount": 40000,
     "monthly_premium": 65,
     "description": "Covers dwelling and small-business assets (store stock, tricycle, boat motor) against storm, flood, and fire damage."
   },
   {
-    "id": "P-ACC-01",
-    "type": "accident",
-    "provider": "CoastalCare Coop",
-    "name": "Personal Accident Micro",
+    "id": "P-ALZ-CAL",
+    "tier": "C",
+    "type": "calamity",
+    "provider": "Allianz PNB Life (bancassurance)",
+    "name": "CalamityShield Plus",
+    "coverage_amount": 60000,
+    "monthly_premium": 110,
+    "description": "Higher calamity payout tier with a faster parametric trigger on PAGASA storm signals."
+  },
+  {
+    "id": "P-SUN-LIFE",
+    "tier": "C",
+    "type": "life",
+    "provider": "Sun Life Grepa (bancassurance)",
+    "name": "Family Term Plus",
+    "coverage_amount": 100000,
+    "monthly_premium": 70,
+    "description": "Higher life-cover tier for households with several dependents."
+  },
+  {
+    "id": "P-AGR-CROP",
+    "tier": "C",
+    "type": "crop",
+    "provider": "AgriSure (bancassurance)",
+    "name": "Multi-Peril Crop Cover",
     "coverage_amount": 25000,
-    "monthly_premium": 20,
-    "description": "Accidental death and disablement benefit with daily income support during recovery."
+    "monthly_premium": 90,
+    "eligible_livelihoods": ["rice_farming"],
+    "description": "Commercial multi-peril crop indemnity for farmers who are not (yet) RSBSA-registered and so fall outside PCIC's free coverage."
   }
 ]

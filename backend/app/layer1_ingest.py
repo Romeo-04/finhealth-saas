@@ -37,6 +37,9 @@ IMPUTABLE_DEFAULTS = {
     "liquid_savings": lambda r: 0.0,           # conservative: assume no buffer
     "loans": lambda r: [],
     "on_time_ratio": lambda r: 1.0,            # no history -> do not penalize
+    "account_tenure_months": lambda r: 0,
+    "savings_deposit_regularity": lambda r: 0.0,
+    "rsbsa_registered": lambda r: False,
     "insurance_held": lambda r: [],
     "prior_shock_last_24m": lambda r: False,
 }
@@ -105,6 +108,17 @@ def standardize_records(raw_records: list[dict]) -> tuple[list[Client], Validati
             rejections.append(f"{client_id}: unparseable loans/insurance ({exc})")
             continue
 
+        # Monthly essential-expense series (Spend). If absent, derive a flat
+        # series from the scalar benchmark — a modeling choice, not silent fill.
+        raw_expenses = record.get("monthly_expenses")
+        try:
+            expense_series = ([float(x) for x in _parse_list(raw_expenses)]
+                              if raw_expenses else [])
+        except (ValueError, TypeError, json.JSONDecodeError):
+            expense_series = []
+        if len(expense_series) != 12:
+            expense_series = [expenses] * 12
+
         hazard = str(record["hazard_zone"]).strip().lower()
         if hazard not in HAZARD_ZONES:
             hazard = "low_risk"
@@ -120,6 +134,9 @@ def standardize_records(raw_records: list[dict]) -> tuple[list[Client], Validati
         prior_shock = record["prior_shock_last_24m"]
         if isinstance(prior_shock, str):
             prior_shock = prior_shock.strip().lower() in ("true", "1", "yes")
+        rsbsa = record["rsbsa_registered"]
+        if isinstance(rsbsa, str):
+            rsbsa = rsbsa.strip().lower() in ("true", "1", "yes")
 
         clients.append(Client(
             client_id=client_id,
@@ -131,9 +148,13 @@ def standardize_records(raw_records: list[dict]) -> tuple[list[Client], Validati
             monthly_income_json=json.dumps(income),
             income_sources=int(float(record["income_sources"])),
             monthly_essential_expenses=expenses,
+            monthly_expenses_json=json.dumps(expense_series),
             liquid_savings=float(record["liquid_savings"]),
             loans_json=json.dumps(loans),
             on_time_ratio=min(1.0, max(0.0, float(record["on_time_ratio"]))),
+            account_tenure_months=int(float(record["account_tenure_months"])),
+            savings_deposit_regularity=min(1.0, max(0.0, float(record["savings_deposit_regularity"]))),
+            rsbsa_registered=bool(rsbsa),
             insurance_held_json=json.dumps(sorted(set(held))),
             prior_shock_last_24m=bool(prior_shock),
             imputed_fields_json=json.dumps(sorted(set(imputed))),

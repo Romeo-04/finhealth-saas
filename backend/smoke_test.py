@@ -44,8 +44,23 @@ with Session(engine) as session:
               f"health={p.overall_score}, {p.livelihood}/{p.hazard_zone}")
     assert divergent, "need at least one divergence case"
 
-    # Recommendations for a few gapped clients
+    # Non-borrower handling: Borrow dimension must be insufficient-data and
+    # excluded from the composite for depositor-only clients.
+    non_borrowers = [c for c in clients if not c.loans]
+    print(f"Non-borrower (depositor-only) clients: {len(non_borrowers)}")
+    assert non_borrowers, "expected some non-borrower clients"
+    nbp = build_profile(non_borrowers[0], ml)
+    assert nbp.dimensions["borrow"].insufficient_data, "Borrow must be insufficient-data"
+    assert not nbp.is_borrower
+
+    # Estimated loss must be quantified on every gap item.
+    for p in profiles:
+        for g in p.resilience_gap:
+            assert g.estimated_loss > 0, f"{p.client_id} {g.type} has no estimated loss"
+
+    # Recommendations for a few gapped clients — three-tier adoption model.
     recommended = unaffordable = 0
+    tiers = {"A": 0, "B": 0, "C": 0}
     for c in clients:
         p = next(x for x in profiles if x.client_id == c.client_id)
         if not p.resilience_gap:
@@ -54,13 +69,18 @@ with Session(engine) as session:
         for r in resp.recommendations:
             if r.status == "recommended":
                 recommended += 1
+                assert r.tier in ("A", "B", "C")
+                tiers[r.tier] += 1
                 assert r.premium_pct_of_disposable is not None
                 assert r.premium_pct_of_disposable <= 10.001
-                assert r.projected_annual_commission > 0
+                assert r.projected_annual_commission >= 0  # Tier A is free -> 0
+                assert r.enrollment_pathway
             else:
                 unaffordable += 1
     print(f"Recommendations: {recommended} recommended, {unaffordable} flagged unaffordable")
+    print(f"  by tier — A (free PCIC): {tiers['A']}, B (embedded): {tiers['B']}, C (commercial): {tiers['C']}")
     assert recommended > 0 and unaffordable > 0
+    assert tiers["A"] > 0, "expected some free Tier-A (PCIC) routings"
 
     # Example rationale
     sample = next(c for c in clients if c.client_id == "C0011")

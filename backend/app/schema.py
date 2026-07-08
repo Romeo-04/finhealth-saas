@@ -42,12 +42,23 @@ class Client(SQLModel, table=True):
     monthly_income_json: str
     income_sources: int
 
-    monthly_essential_expenses: float
+    monthly_essential_expenses: float          # mean/benchmark essential expenses
+    # JSON-encoded list of 12 monthly essential-expense outflows (Spend dimension).
+    # Derived as a flat series from the scalar when a series isn't provided.
+    monthly_expenses_json: str = "[]"
     liquid_savings: float
 
-    # JSON-encoded list of {principal, monthly_payment, months_remaining}
+    # JSON-encoded list of {principal, monthly_payment, months_remaining}.
+    # Empty for non-borrower clients (depositor / savings-group members).
     loans_json: str
     on_time_ratio: float  # 0-1 repayment history
+
+    # Forward-looking (Plan) signals.
+    account_tenure_months: int = 0
+    savings_deposit_regularity: float = 0.0    # 0-1 consistency of deposits
+
+    # Government-registry linkage — RSBSA registration gates Tier-A PCIC routing.
+    rsbsa_registered: bool = False
 
     # JSON-encoded list of insurance types held
     insurance_held_json: str
@@ -60,6 +71,14 @@ class Client(SQLModel, table=True):
     @property
     def monthly_income(self) -> list[float]:
         return json.loads(self.monthly_income_json)
+
+    @property
+    def monthly_expenses(self) -> list[float]:
+        series = json.loads(self.monthly_expenses_json or "[]")
+        if not series:
+            # Fall back to a flat series from the scalar benchmark.
+            return [self.monthly_essential_expenses] * 12
+        return series
 
     @property
     def loans(self) -> list[dict]:
@@ -88,7 +107,8 @@ class Driver(BaseModel):
 class DimensionScore(BaseModel):
     score: int
     drivers: list[Driver]
-    ml_assisted: bool = False  # true only for the labelled ML refinement
+    ml_assisted: bool = False       # true only for the labelled ML refinement
+    insufficient_data: bool = False  # true when the dimension can't be assessed
 
 
 class GapItem(BaseModel):
@@ -96,6 +116,7 @@ class GapItem(BaseModel):
     severity: int            # numeric severity weight
     severity_label: str      # "high" | "medium"
     reason: str              # plain-language exposure reason
+    estimated_loss: float = 0.0  # est. peso loss if this risk materializes
 
 
 class HealthProfile(BaseModel):
@@ -118,6 +139,9 @@ class HealthProfile(BaseModel):
     monthly_debt_service: float
     insurance_held: list[str]
     monthly_income: list[float]
+    account_tenure_months: int
+    rsbsa_registered: bool
+    is_borrower: bool
 
 
 class ClientSummary(BaseModel):
@@ -136,10 +160,13 @@ class Recommendation(BaseModel):
     status: str  # "recommended" | "protection_gap_unaffordable"
     gap_type: str
     severity_label: str
+    tier: Optional[str] = None            # "A" | "B" | "C"
+    tier_label: Optional[str] = None      # human-readable tier description
     product: Optional[dict] = None
     rationale: str
     premium_pct_of_disposable: Optional[float] = None
     projected_annual_commission: Optional[float] = None
+    enrollment_pathway: Optional[str] = None  # what branch staff must do
 
 
 class RecommendationResponse(BaseModel):

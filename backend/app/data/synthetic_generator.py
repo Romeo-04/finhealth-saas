@@ -157,7 +157,18 @@ def generate_clients(n: int = config.SYNTHETIC_CLIENT_COUNT,
         mean_income = sum(income) / len(income)
 
         # Expenses: 55-85% of mean income for thin-margin households.
-        expenses = round(mean_income * rng.uniform(0.55, 0.85), 2)
+        expense_ratio = rng.uniform(0.55, 0.85)
+        expenses = round(mean_income * expense_ratio, 2)
+        # Monthly essential-expense series (Spend dimension): expenses track a
+        # baseline with modest month-to-month noise; farmers/fishers see a bump
+        # in lean months (they still must eat when income collapses).
+        expense_cv = rng.uniform(0.05, 0.22)
+        expense_series = []
+        for month in range(1, 13):
+            val = rng.gauss(expenses, expenses * expense_cv)
+            if month in profile["lean_months"]:
+                val *= rng.uniform(1.02, 1.12)
+            expense_series.append(round(max(val, expenses * 0.4), 2))
 
         # Savings: most are thin (<1 month of expenses), a minority comfortable.
         savings_roll = rng.random()
@@ -168,8 +179,10 @@ def generate_clients(n: int = config.SYNTHETIC_CLIENT_COUNT,
         else:
             savings = expenses * rng.uniform(3.0, 8.0)
 
-        # Loans: 0-3 active loans, payments sized to plausible DSRs.
-        n_loans = rng.choices([0, 1, 2, 3], weights=[15, 50, 25, 10])[0]
+        # Loans: some clients are depositor-only (non-borrowers) — the revised
+        # architecture assesses any FSP client, not just borrowers. ~18% carry
+        # no active loan; the Borrow dimension is then insufficient-data.
+        n_loans = rng.choices([0, 1, 2, 3], weights=[18, 47, 25, 10])[0]
         loans = []
         for _ in range(n_loans):
             principal = round(rng.uniform(5000, 60000), -2)
@@ -181,7 +194,21 @@ def generate_clients(n: int = config.SYNTHETIC_CLIENT_COUNT,
                 "monthly_payment": payment,
                 "months_remaining": months,
             })
-        on_time = round(min(1.0, max(0.3, rng.gauss(0.88, 0.12))), 2)
+        # Non-borrowers have no repayment history to report.
+        on_time = (round(min(1.0, max(0.3, rng.gauss(0.88, 0.12))), 2)
+                   if loans else 1.0)
+
+        # Plan signals: account tenure and deposit regularity. Salaried/tenured
+        # clients skew longer and steadier; seasonal households more erratic.
+        tenure = rng.randint(3, 96)
+        deposit_regularity = round(min(1.0, max(0.0, rng.gauss(
+            0.75 if livelihood == "salaried" else 0.5,
+            0.2))), 2)
+
+        # RSBSA registration — gates Tier-A PCIC routing. Most farmers/fishers
+        # are registered (or registrable); non-agri livelihoods are not.
+        rsbsa = (livelihood in ("rice_farming", "fishing")
+                 and rng.random() < 0.75)
 
         client = {
             "client_id": f"C{i + 1:04d}",
@@ -193,9 +220,13 @@ def generate_clients(n: int = config.SYNTHETIC_CLIENT_COUNT,
             "monthly_income": income,
             "income_sources": rng.choices([1, 2, 3], weights=[55, 35, 10])[0],
             "monthly_essential_expenses": expenses,
+            "monthly_expenses": expense_series,
             "liquid_savings": round(savings, 2),
             "loans": loans,
             "on_time_ratio": on_time,
+            "account_tenure_months": tenure,
+            "savings_deposit_regularity": deposit_regularity,
+            "rsbsa_registered": rsbsa,
             "insurance_held": _insurance_held(rng, livelihood, hazard_zone),
             "prior_shock_last_24m": rng.random() < (0.45 if hazard_zone != "low_risk" else 0.12),
             "imputed_fields": [],
@@ -213,6 +244,7 @@ def generate_clients(n: int = config.SYNTHETIC_CLIENT_COUNT,
         c["monthly_income"] = _income_series(rng, LIVELIHOOD_PROFILES["rice_farming"], False)
         mean_income = sum(c["monthly_income"]) / 12
         c["monthly_essential_expenses"] = round(mean_income * 0.80, 2)
+        c["monthly_expenses"] = [c["monthly_essential_expenses"]] * 12
         c["liquid_savings"] = round(c["monthly_essential_expenses"] * 0.25, 2)
         c["loans"] = [{
             "principal": 20000,
@@ -223,6 +255,14 @@ def generate_clients(n: int = config.SYNTHETIC_CLIENT_COUNT,
         c["insurance_held"] = []
         c["income_sources"] = 1
         c["household_dependents"] = max(2, c["household_dependents"])
+        # Thin forward-planning too: short tenure, erratic saving. Perfect
+        # repayment (high Borrow / high credit proxy) can't rescue the composite
+        # once Save, Plan, and Resilience are all weak -> genuinely Vulnerable.
+        c["account_tenure_months"] = 6
+        c["savings_deposit_regularity"] = 0.15
+        # RSBSA-registered but not enrolled in PCIC -> their high-severity crop
+        # gap routes to free Tier-A coverage: the strongest, zero-cost fix.
+        c["rsbsa_registered"] = True
 
     return clients
 
@@ -234,6 +274,7 @@ def clients_to_csv_rows(clients: list[dict]) -> list[dict]:
     for c in clients:
         row = dict(c)
         row["monthly_income"] = json.dumps(c["monthly_income"])
+        row["monthly_expenses"] = json.dumps(c["monthly_expenses"])
         row["loans"] = json.dumps(c["loans"])
         row["insurance_held"] = json.dumps(c["insurance_held"])
         row.pop("imputed_fields", None)
