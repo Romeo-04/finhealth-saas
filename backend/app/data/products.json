@@ -1,0 +1,92 @@
+[
+  {
+    "id": "P-CAL-01",
+    "type": "calamity",
+    "provider": "AgriSure Mutual",
+    "name": "CalamityShield Basic",
+    "coverage_amount": 30000,
+    "monthly_premium": 55,
+    "description": "Cash payout after a declared typhoon or flood event in the insured municipality. Covers emergency expenses and income bridge."
+  },
+  {
+    "id": "P-CAL-02",
+    "type": "calamity",
+    "provider": "PilipinasProtect",
+    "name": "CalamityShield Plus",
+    "coverage_amount": 60000,
+    "monthly_premium": 110,
+    "description": "Higher calamity payout tier with faster parametric trigger on PAGASA storm signals."
+  },
+  {
+    "id": "P-CROP-01",
+    "type": "crop",
+    "provider": "AgriSure Mutual",
+    "name": "AniSecure Rice Cover",
+    "coverage_amount": 25000,
+    "monthly_premium": 60,
+    "description": "Indemnifies crop loss from typhoon, flood, pests, or drought for one cropping season. Modelled on PCIC-style cover."
+  },
+  {
+    "id": "P-CROP-02",
+    "type": "crop",
+    "provider": "CoastalCare Coop",
+    "name": "HuliSecure Fisher Cover",
+    "coverage_amount": 20000,
+    "monthly_premium": 50,
+    "description": "Income-shock protection for fishing households: payout when storm closures or gear loss interrupt catch income."
+  },
+  {
+    "id": "P-LIFE-01",
+    "type": "life",
+    "provider": "BayaniLife",
+    "name": "Family Term Micro-Life",
+    "coverage_amount": 50000,
+    "monthly_premium": 35,
+    "description": "Term life cover paying a lump sum to dependents. Includes a small funeral benefit rider."
+  },
+  {
+    "id": "P-LIFE-02",
+    "type": "life",
+    "provider": "PilipinasProtect",
+    "name": "Family Term Micro-Life Plus",
+    "coverage_amount": 100000,
+    "monthly_premium": 70,
+    "description": "Higher life cover tier for households with several dependents."
+  },
+  {
+    "id": "P-HLT-01",
+    "type": "health",
+    "provider": "KalusuganCare",
+    "name": "Hospital Cash Micro-Health",
+    "coverage_amount": 15000,
+    "monthly_premium": 45,
+    "description": "Fixed cash benefit per hospital day plus outpatient allowance, designed to top up PhilHealth."
+  },
+  {
+    "id": "P-HLT-02",
+    "type": "health",
+    "provider": "BayaniLife",
+    "name": "Hospital Cash Lite",
+    "coverage_amount": 8000,
+    "monthly_premium": 25,
+    "description": "Entry-tier hospital cash benefit for thin-margin households."
+  },
+  {
+    "id": "P-PROP-01",
+    "type": "property",
+    "provider": "PilipinasProtect",
+    "name": "Bahay & Negosyo Property Cover",
+    "coverage_amount": 40000,
+    "monthly_premium": 65,
+    "description": "Covers dwelling and small-business assets (store stock, tricycle, boat motor) against storm, flood, and fire damage."
+  },
+  {
+    "id": "P-ACC-01",
+    "type": "accident",
+    "provider": "CoastalCare Coop",
+    "name": "Personal Accident Micro",
+    "coverage_amount": 25000,
+    "monthly_premium": 20,
+    "description": "Accidental death and disablement benefit with daily income support during recovery."
+  }
+]
